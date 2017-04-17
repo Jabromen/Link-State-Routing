@@ -13,8 +13,8 @@ void buildLSPacket(char *buffer, int hopCount, int seqNumber, char source, char 
 {
 	memset(buffer, hopCount % 256, 1);
 	memset(buffer+1, seqNumber % 256, 1);
-	memset(buffer+2, source % 256, 1);
-	memset(buffer+3, destination % 256, 1);
+	memset(buffer+2, source, 1);
+	memset(buffer+3, destination, 1);
 
 	int ncost = htonl(cost);
 	memcpy(buffer+4, &ncost, 4);
@@ -77,11 +77,11 @@ void printLSPacket(char *lsPacket)
 	cost = getCost(lsPacket);
 
 	printf("Hop Count:       %d\n"
-		   "Sequence Number: %d\n"
-		   "Source ID:       %c\n"
-		   "Destination ID:  %c\n"
-		   "Cost:            %d\n",
-		   hopCount, seqNumber, source, destination, cost);
+	       "Sequence Number: %d\n"
+	       "Source ID:       %c\n"
+	       "Destination ID:  %c\n"
+	       "Cost:            %d\n",
+	       hopCount, seqNumber, source, destination, cost);
 }
 
 int decrementHopCount(char *lsPacket)
