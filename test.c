@@ -17,20 +17,20 @@ int main(void)
 		printLSPacket(lsPacket);
 	}
 
-	struct graphT *graph = newGraph();
+	struct graphT *graph = newGraph('A');
 
 	addEdge(graph, 'A', 'B', 60, 0);
 	addEdge(graph, 'A', 'C', 50, 0);
 	addEdge(graph, 'A', 'D', 40, 0);
 	addEdge(graph, 'A', 'E', 30, 0);
 
-	processLinkStatePacket(graph, lsPacket);
+	addEdgeFromPacket(graph, lsPacket);
 	printGraph(graph);
 	printf("\n");
 
 	buildLSPacket(lsPacket, 3, 1, 'A', 'B', 20);
 
-	processLinkStatePacket(graph, lsPacket);
+	addEdgeFromPacket(graph, lsPacket);
 	printGraph(graph);
 
 	return 0;

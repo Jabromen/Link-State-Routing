@@ -9,14 +9,18 @@
 
 #include "lsGraph.h"
 
-struct graphT *newGraph()
+struct graphT *newGraph(char label)
 {
 	struct graphT *graph = (struct graphT *) malloc(sizeof(struct graphT));
 
 	if (!graph)
 		return NULL;
 
-	graph->vertices = NULL;
+	if (!(graph->vertices = newVertex(label)))
+	{
+		free(graph);
+		return NULL;
+	}
 
 	return graph;
 }
@@ -149,7 +153,7 @@ int addEdge(struct graphT *graph, char from, char to, int cost, int sequenceNum)
 		return updateExistingEdge(edge, cost, sequenceNum);
 }
 
-int processLinkStatePacket(struct graphT *graph, char *lsPacket)
+int addEdgeFromPacket(struct graphT *graph, char *lsPacket)
 {
 	char from = getSourceID(lsPacket);
 	char to = getDestinationID(lsPacket);
