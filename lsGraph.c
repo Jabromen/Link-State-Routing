@@ -9,174 +9,176 @@
 
 #include "lsGraph.h"
 
-struct graphT *newGraph(char label)
+struct Graph *newGraph(int size, int directed)
 {
-	struct graphT *graph = (struct graphT *) malloc(sizeof(struct graphT));
+	int i;
+	struct Graph *graph = (struct Graph *) malloc(sizeof(struct Graph));
 
 	if (!graph)
 		return NULL;
 
-	if (!(graph->vertices = newVertex(label)))
+	if(!(graph->key = (char *) malloc(size * sizeof(char))))
 	{
 		free(graph);
 		return NULL;
 	}
 
+	for (i = 0; i < size; i++)
+		graph->key[i] = '\0';
+
+	if(!(graph->array = (struct AdjList *) malloc(size * sizeof(struct AdjList))))
+	{
+		free(graph->key);
+		free(graph);
+		return NULL;
+	}
+
+	for (i = 0; i < size; i++)
+		graph->array[i].head = NULL;
+
+	graph->size = size;
+	graph->directed = directed;
+
 	return graph;
 }
 
-struct vertexT *newVertex(char label)
+struct AdjListNode *newAdjListNode(int dest, int cost, int seqN)
 {
-	struct vertexT *vertex = (struct vertexT *) malloc(sizeof(struct vertexT));
+	struct AdjListNode *node = (struct AdjListNode *) malloc(sizeof(struct AdjListNode));
 
-	if (!vertex)
+	if (!node)
 		return NULL;
 
-	vertex->label = label;
-	vertex->edges = NULL;
-	vertex->next = NULL;
+	node->dest = dest;
+	node->cost = cost;
+	node->seqN = seqN;
+	node->next = NULL;
 
-	return vertex;
+	return node;
 }
 
-struct edgeT *newEdge(struct vertexT *to, int cost, int sequenceNum)
+int updateEdge(struct Graph *graph, int source, int dest, int cost, int seqN)
 {
-	struct edgeT *edge = (struct edgeT *) malloc(sizeof(struct edgeT));
+	int returnVal = 0;
+	struct AdjListNode *node = graph->array[source].head;
 
-	if (!edge)
-		return NULL;
-
-	edge->cost = cost;
-	edge->sequenceNum = sequenceNum;
-	edge->connectsTo = to;
-	edge->next = NULL;
-
-	return edge;
-}
-
-struct vertexT *findVertex(struct graphT *graph, char label)
-{
-	struct vertexT *vertex = graph->vertices;
-
-	while (vertex)
+	while (node)
 	{
-		if (vertex->label == label)
-			return vertex;
-		else
-			vertex = vertex->next;
+		if (node->dest == dest)
+		{
+			if ((node->seqN + 1) % 255 == seqN)
+			{
+				node->cost = cost;
+				node->seqN = seqN;
+			}
+			returnVal = 1;
+			break;
+		}
+		node = node->next;
 	}
 
-	return NULL;
-}
-
-
-struct vertexT *insertNewVertex(struct graphT *graph, char label)
-{
-	struct vertexT *vertex = graph->vertices;
-
-	if (!vertex)
+	// If undirected graph, find and update reverse edge as well
+	if (!graph->directed && returnVal)
 	{
-		graph->vertices = newVertex(label);
-		return graph->vertices;
+		node = graph->array[dest].head;
+
+		while (node)
+		{
+			if (node->dest == source)
+			{
+				if ((node->seqN + 1) % 255 == seqN)
+				{
+					node->cost = cost;
+					node->seqN = seqN;
+				}
+				break;
+			}
+			node = node->next;
+		}
 	}
-
-	while (vertex->next)
-		vertex = vertex->next;
-
-	vertex->next = newVertex(label);
-	return vertex->next;
+	return returnVal;
 }
 
-struct edgeT *findEdge(struct vertexT *from, struct vertexT *to)
+int addEdge(struct Graph *graph, char source, char dest, int cost, int seqN)
 {
-	struct edgeT *edge = from->edges;
+	int srcI, destI;
+	struct AdjListNode *node;
 
-	while (edge)
-	{
-		if (edge->connectsTo == to)
-			return edge;
-		else
-			edge = edge->next;
-	}
+	// Get the indices of the source and destination nodes
+	srcI = getIndex(graph->key, graph->size, source);
+	destI = getIndex(graph->key, graph->size, dest);
 
-	return NULL;
-}
+	if (srcI < 0 || destI < 0)
+		return 0;
 
-struct edgeT *insertNewEdge(struct vertexT *from, struct vertexT *to, int cost, int sequenceNum)
-{
-	struct edgeT *edge = from->edges;
-
-	if (!edge)
-	{
-		from->edges = newEdge(to, cost, sequenceNum);
-		return from->edges;
-	}
-
-	while (edge->next)
-		edge = edge->next;
-
-	edge->next = newEdge(to, cost, sequenceNum);
-	return edge->next;
-}
-
-int updateExistingEdge(struct edgeT *edge, int cost, int sequenceNum)
-{
-	if ((edge->sequenceNum + 1) % 255 != sequenceNum)
+	// Attempt to update existing edge
+	if (updateEdge(graph, srcI, destI, cost, seqN))
 		return 1;
 
-	edge->cost = cost;
-	edge->sequenceNum = sequenceNum;
-	return 0;
-}
+	// If no existing edge was found, add a new edge
+	if (!(node = newAdjListNode(destI, cost, seqN)))	
+		return 0;
 
-int addEdge(struct graphT *graph, char from, char to, int cost, int sequenceNum)
-{
-	struct vertexT *vFrom, *vTo;
-	struct edgeT *edge;
+	node->next = graph->array[srcI].head;
+	graph->array[srcI].head = node;
 
-	if (!(vTo = findVertex(graph, to)))
-		if (!(vTo = insertNewVertex(graph, to)))
-			return -1;
-
-	if (!(vFrom = findVertex(graph, from)))
-		if (!(vFrom = insertNewVertex(graph, from)))
-			return -1;
-
-	if (!(edge = findEdge(vFrom, vTo)))
+	// If undirected graph, add reverse edge as well
+	if (!graph->directed)
 	{
-		if ((edge = insertNewEdge(vFrom, vTo, cost, sequenceNum)))
+		if (!(node = newAdjListNode(srcI, cost, seqN)))
 			return 0;
-		else
-			return -1;
+
+		node->next = graph->array[destI].head;
+		graph->array[destI].head = node;
 	}
-	else
-		return updateExistingEdge(edge, cost, sequenceNum);
+
+	return 1;
 }
 
-int addEdgeFromPacket(struct graphT *graph, char *lsPacket)
+int getIndex(char *key, int size, char label)
 {
-	char from = getSourceID(lsPacket);
-	char to = getDestinationID(lsPacket);
-	int cost = getCost(lsPacket);
-	int sequenceNum = getSequenceNumber(lsPacket);
+	int i;
 
-	return addEdge(graph, from, to, cost, sequenceNum);
-}
-
-void printGraph(struct graphT *graph)
-{
-	struct vertexT *vertex = graph->vertices;
-	struct edgeT *edge;
-
-	while (vertex)
+	for (i = 0; i < size && key[i]; i++)
 	{
-		printf("Vertex '%c' connects to:\n", vertex->label);
-		edge = vertex->edges;
-		while (edge)
+		if (label == key[i])
+			return i;
+	}
+
+	if (i < size)
+	{
+		key[i] = label;
+		return i;
+	}
+
+	return -1;
+}
+
+int addEdgeFromPacket(struct Graph *graph, char *lsPacket)
+{
+	char source = getSourceID(lsPacket);
+	char dest = getDestinationID(lsPacket);
+	int cost = getCost(lsPacket);
+	int seqN = getSequenceNumber(lsPacket);
+
+	return addEdge(graph, source, dest, cost, seqN);
+}
+
+void printGraph(struct Graph *graph)
+{
+	int i;
+	struct AdjListNode *node;
+
+	for (i = 0; i < graph->size; i++)
+	{
+		node = graph->array[i].head;
+
+		printf("Vertex '%c' connects to:\n", graph->key[i]);
+
+		while (node)
 		{
-			printf("\t'%c' at a cost of %d\n", edge->connectsTo->label, edge->cost);
-			edge = edge->next;
+			printf("\t'%c' at a cost of %d\n", graph->key[node->dest], node->cost);
+			node = node->next;
 		}
-		vertex = vertex->next;
 	}
 }

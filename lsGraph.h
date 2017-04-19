@@ -16,116 +16,75 @@
 
 #include "lsPacket.h"
 
-struct graphT {
-	struct vertexT *vertices;
-} graphT;
+struct Graph
+{
+	int size;
+	int directed;
+	char *key;
+	struct AdjList *array;
+} Graph;
 
-struct vertexT {
-	char label;
-	struct edgeT *edges;
-	struct vertexT *next;
-} vertexT;
+struct AdjList
+{
+	struct AdjListNode *head;
+} AdjList;
 
-struct edgeT {
+struct AdjListNode
+{
+	int dest;
 	int cost;
-	int sequenceNum;
-	struct vertexT *connectsTo;
-	struct edgeT *next;
-} edgeT;
+	int seqN;
+	struct AdjListNode *next;
+} AdjListNode;
 
 /**
  * Allocates memory for a new graph structure.
  *
- * @param label - label of root vertex of graph
+ * @param size     - number of nodes in graph
+ * @param directed - 1 if directed graph, 0 if undirected graph
  *
  * @return - pointer to graph structure
  */
-struct graphT *newGraph(char label);
+struct Graph *newGraph(int size, int directed);
 
 /**
- * Allocates memory for a new vertex structure.
+ * Allocates memory for a new adjacency list node
  *
- * @param label - label of vertex
- *
- * @return - pointer to vertex structure
- */
-struct vertexT *newVertex(char label);
-
-/**
- * Allocates memory for a new edge structure.
- *
- * @param cost        - cost of traversing the edge
- * @param sequenceNum - sequence number of last link-state packet received.
+ * @param dest - index of destination node
+ * @param cost - cost of traversing the edge
+ * @param seqN - sequence number of last link-state packet received.
  *
  * @return - pointer to edge structure
  */
-struct edgeT *newEdge(struct vertexT *to, int cost, int sequenceNum);
+struct AdjListNode *newAdjListNode(int dest, int cost, int seqN);
 
 /**
- * Finds a vertex with a given label in a graph.
+ * Adds or updates an edge in a graph structure.
  *
- * @param graph - graph structure
- * @param label - vertex label being searched for
- *
- * @return - pointer to vertex if found, NULL if not found
- */
-struct vertexT *findVertex(struct graphT *graph, char label);
-
-/**
- * Inserts a new vertex into a graph
- *
- * @param graph - graph structure
- * @param label - label of vertex being inserted
- *
- * @return - pointer to added vertex
- */
-struct vertexT *insertNewVertex(struct graphT *graph, char label);
-
-/**
- * Finds a particular edge of a vertex
- *
- * @param from - vertex from which the edge originates
- * @param to   - vertex to which the edge terminates
- *
- * @return - pointer to edge if found, NULL if not found
- */
-struct edgeT *findEdge(struct vertexT *from, struct vertexT *to);
-
-/**
- * Inserts a new edge into a vertex
- *
- * @param from        - vertex from which the edge originates
- * @param to          - vertex to which the edge terminates
- * @param cost        - cost of traversing edge
- * @param sequenceNum - sequence number of the link-state packet
- *
- * @return - pointer to added edge
- */
-struct edgeT *insertNewEdge(struct vertexT *from, struct vertexT *to, int cost, int sequenceNum);
-
-/**
- * Adds an edge to the graph structure.
- *
- * @param graph       - graph structure being modified
- * @param from        - vertex label of source router
- * @param to          - vertex label of destination router
- * @param cost        - cost of traversing edge
- * @param sequenceNum - sequence number of link-state packet
+ * @param graph  - graph structure being modified
+ * @param source - node label of source
+ * @param dest   - node label of destination
+ * @param cost   - cost of traversing edge
+ * @param seqN   - sequence number of link-state packet
  *
  * @return - 0 if successful, -1 if an error occurred
  */
-int addEdge(struct graphT *graph, char from, char to, int cost, int sequenceNum);
+int addEdge(struct Graph *graph, char source, char dest, int cost, int seqN);
 
 /**
  * Updates an existing edge if a newer sequence number is received.
  *
- * @param edge        - edge being modified
- * @param cost        - new cost of edge
- * @param sequenceNum - sequence number of received link-state packet
+ * @param graph  - graph being updated
+ * @param source - index of source node
+ * @param dest   - index of destination node
+ * @param cost   - new cost of edge
+ * @param seqN   - sequence number of received link-state packet
  *
  * @return - 1 if not updated, 0 if updated
  */
-int updateExistingEdge(struct edgeT *edge, int cost, int sequenceNum);
+int updateEdge(struct Graph *graph, int source, int dest, int cost, int seqN);
+
+int getIndex(char *key, int size, char label);
 
 /**
  * Processes a link state packet and adds/modifies the graph accordingly
@@ -135,13 +94,13 @@ int updateExistingEdge(struct edgeT *edge, int cost, int sequenceNum);
  *
  * @return - 0 if successful, -1 if an error occurred
  */
-int addEdgeFromPacket(struct graphT *graph, char *lsPacket);
+int addEdgeFromPacket(struct Graph *graph, char *lsPacket);
 
 /**
  * Prints all of the vertices and edges of a graph. Used for debugging.
  *
  * @param graph - graph being printed
  */
-void printGraph(struct graphT *graph);
+void printGraph(struct Graph *graph);
 
 #endif // _LSGRAPH_H

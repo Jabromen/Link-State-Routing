@@ -9,253 +9,212 @@
 
 #include "lsDijkstra.h"
 
-void heapify(struct heapNode *heap, int count)
+struct MinHeap *newMinHeap(int cap)
 {
-	int start = PARENT(count - 1);
+	struct MinHeap *heap = (struct MinHeap *) malloc(sizeof(struct MinHeap));
 
-	while (start >= 0)
-	{
-		siftDown(heap, start, count - 1);
-		start--;
-	}
-}
-
-void siftDown(struct heapNode *heap, int start, int end)
-{
-	int root, child, swp;
-
-	root = start;
-
-	while (LCHILD(root) <= end)
-	{
-		child = LCHILD(root);
-		swp = root;
-
-		if (heap[swp].value > heap[child].value)
-			swp = child;
-
-		if (child + 1 <= end && heap[swp].value > heap[child+1].value)
-			swp = child + 1;
-
-		if (swp == root)
-			return;
-
-		else
-		{
-			swap(&heap[root], &heap[swp]);
-			root = swp;
-		}
-	}
-}
-
-void siftUp(struct heapNode *heap, int start)
-{
-	int swp, parent;
-
-	swp = start;
-
-	while (swp > 0)
-	{
-		parent = PARENT(swp);
-
-		if (heap[parent].value > heap[swp].value)
-		{
-			swap(&heap[parent], &heap[swp]);
-			swp = parent;
-		}
-
-		else
-			return;
-	}
-}
-
-void swap(struct heapNode *h1, struct heapNode *h2)
-{
-	int value = h1->value;
-	struct tableEntry *entry = h1->entry;
-
-	h1->value = h2->value;
-	h1->entry = h2->entry;
-	h2->value = value;
-	h2->entry = entry;
-}
-
-struct priorityQueue *newPriorityQueue(int max)
-{
-	struct priorityQueue *pq = (struct priorityQueue *) malloc(sizeof(struct priorityQueue));
-
-	if (!pq)
+	if (!heap)
 		return NULL;
 
-	pq->heap = (struct heapNode *) malloc(max * sizeof(struct heapNode));
-	pq->size = 0;
-
-	if (!pq->heap)
+	if (!(heap->pos = (int *) malloc(cap * sizeof(int))))
 	{
-		free(pq);
+		free(heap);
 		return NULL;
 	}
 
-	return pq;
+	if (!(heap->array = (struct HeapNode **) malloc(cap * sizeof(struct HeapNode *))))
+	{
+		free(heap->pos);
+		free(heap);
+		return NULL;
+	}
+
+	heap->size = 0;
+	heap->cap = cap;
+
+	return heap;
 }
 
-struct heapNode newHeapNode(struct tableEntry *entry)
+struct HeapNode *newHeapNode(int index, int cost)
 {
-	struct heapNode node;
+	struct HeapNode *node = (struct HeapNode *) malloc(sizeof(struct HeapNode));
 
-	node.value = entry->cost;
-	node.entry = entry;
+	if (!node)
+		return NULL;
+
+	node->index = index;
+	node->cost = cost;
 
 	return node;
 }
 
-void enqueue(struct priorityQueue *pq, struct tableEntry *entry)
+void siftUp(struct MinHeap *heap, int index)
 {
-	if (pq->size >= pq->max)
-		pq->heap = realloc(pq->heap, (pq->size + 1) * sizeof(struct heapNode));
-	
-	pq->heap[pq->size++] = newHeapNode(entry);
-	pq->max++;
+	if (index > heap->size)
+		return;
 
-	heapify(pq->heap, pq->size);
-}
+	int ind, parent, temp;
+	struct HeapNode *indNode, *parentNode;
 
-struct tableEntry *dequeue(struct priorityQueue *pq)
-{
-	if (pq->size <= 0)
-		return NULL;
-
-	struct tableEntry *entry = pq->heap[0].entry;
-
-	swap(&pq->heap[0], &pq->heap[--pq->size]);
-
-	heapify(pq->heap, pq->size);
-
-	return entry;
-}
-
-struct routingTable *newRoutingTable(int size)
-{
-	struct routingTable *table = (struct routingTable *) malloc(sizeof(struct routingTable));
-
-	if (!table)
-		return NULL;
-
-	table->table = (struct tableEntry **) malloc(size * sizeof(struct tableEntry *));
-
-	if (!table->table)
+	ind = index;
+	while (ind > 0)
 	{
-		free(table);
-		return NULL;
-	}
-
-	table->size = size;
-	table->numEntries = 0;
-
-	return table;
-}
-
-struct tableEntry *newTableEntry(struct vertexT *vertex)
-{
-	struct tableEntry *entry = (struct tableEntry *) malloc(sizeof(struct tableEntry));
-
-	entry->vertex = vertex;
-	entry->parent = NULL;
-	entry->cost = INT_MAX;
-
-	return entry;
-}
-
-void updateQueueEntry(struct priorityQueue *pq, struct vertexT *vertex, struct vertexT *parent, char cost)
-{
-	int i;
-	struct tableEntry *entry;
-	for (i = 0; i < pq->size; i++)
-	{
-		if (pq->heap[i].entry->vertex == vertex)
+		parent = PARENT(ind);
+		if (heap->array[ind]->cost < heap->array[parent]->cost)
 		{
-			entry = pq->heap[i].entry;
-			break;
+			indNode = heap->array[ind];
+			parentNode = heap->array[parent];
+
+			temp = heap->pos[indNode->index];
+			heap->pos[indNode->index] = heap->pos[parentNode->index];
+			heap->pos[parentNode->index] = temp;
+
+			swap(&heap->array[ind], &heap->array[parent]);
+
+			ind = parent;
 		}
-	}
-
-	if (cost < entry->cost)
-	{
-		entry->parent = parent;
-		entry->cost = cost;
-		pq->heap[i].value = cost;
-
-		siftUp(pq->heap, i);
-	}
-}
-
-int tableContains(struct routingTable *table, char vertex)
-{
-	int i;
-	for (i = 0; i < table->numEntries; i++)
-	{
-		if (table->table[i]->vertex->label == vertex)
-			return 1;
-	}
-	return 0;
-}
-
-void addEntryToTable(struct routingTable *table, struct tableEntry *entry)
-{
-	if (table->numEntries < table->size)
-		table->table[table->numEntries++] = entry;
-}
-
-void dijkstra(struct routingTable *table, struct graphT *graph, char start)
-{
-	struct vertexT *vertex;
-	struct edgeT *edge;
-	struct tableEntry *entry;
-	struct priorityQueue *pq = newPriorityQueue(table->size);
-
-	vertex = graph->vertices;
-
-	while (vertex)
-	{
-		entry = newTableEntry(vertex);
-
-		if (vertex->label == start)
-			entry->cost = 0;
-
-		enqueue(pq, entry);
-		vertex = vertex->next;
-	}
-
-	entry = dequeue(pq);
-	addEntryToTable(table, entry);
-
-	while (entry)
-	{
-		edge = entry->vertex->edges;
-
-		while (edge)
-		{
-			if (!tableContains(table, edge->connectsTo->label))
-			{
-				updateQueueEntry(pq, edge->connectsTo, entry->vertex, edge->cost + entry->cost);
-			}
-			edge = edge->next;
-		}
-		entry = dequeue(pq);
-		addEntryToTable(table, entry);
-	}
-}
-
-void printRoutingTable(struct routingTable *table)
-{
-	int i;
-	struct tableEntry *entry;
-	for (i = 0; i < table->size; i++)
-	{
-		entry = table->table[i];
-		if (entry->parent)
-			printf("%c %4d %c\n", entry->vertex->label, entry->cost, entry->parent->label);
 		else
-			printf("%c %4d -\n", entry->vertex->label, entry->cost);
+			break;
 	}
+}
+
+void siftDown(struct MinHeap *heap, int index)
+{
+	int small, lChild, rChild, temp;
+	struct HeapNode *smallNode, *indexNode;
+
+	small = index;
+	lChild = LCHILD(small);
+	rChild = RCHILD(small);
+
+	if (lChild < heap->size && heap->array[lChild]->cost < heap->array[small]->cost)
+		small = lChild;
+
+	if (rChild < heap->size && heap->array[rChild]->cost < heap->array[small]->cost)
+		small = rChild;
+
+	if (small != index)
+	{
+		indexNode = heap->array[index];
+		smallNode = heap->array[small];
+
+		temp = heap->pos[indexNode->index];
+		heap->pos[indexNode->index] = heap->pos[smallNode->index];
+		heap->pos[smallNode->index] = temp;
+
+		swap(&heap->array[index], &heap->array[small]);
+
+		siftDown(heap, small);
+	}
+}
+
+void swap(struct HeapNode **a, struct HeapNode **b)
+{
+	struct HeapNode *temp = *a;
+
+	*a = *b;
+	*b = temp;
+}
+
+void insert(struct MinHeap *heap, struct HeapNode *node)
+{
+	if (heap->size >= heap->cap)
+		return;
+
+	heap->array[heap->size] = node;
+	heap->pos[node->index] = heap->size;
+	heap->size++;
+
+	siftUp(heap, heap->size - 1);
+}
+
+struct HeapNode *extract(struct MinHeap *heap)
+{
+	if (isEmpty(heap))
+		return NULL;
+
+	struct HeapNode *node = heap->array[0];
+
+	heap->array[0] = heap->array[heap->size - 1];
+
+	heap->pos[node->index] = heap->size - 1;
+	heap->pos[heap->array[0]->index] = 0;
+
+	heap->size--;
+	siftDown(heap, 0);
+
+	return node;
+}
+
+void updateHeap(struct MinHeap *heap, int index, int cost)
+{
+	int i = heap->pos[index];
+	int op = heap->array[i]->cost > cost;
+
+	heap->array[i]->cost = cost;
+
+	// If lowering cost, sift up
+	if (op)
+		siftUp(heap, i);
+	// If raising cost, sift down
+	else
+		siftDown(heap, i);
+}
+
+int isInHeap(struct MinHeap *heap, int index)
+{
+	return heap->pos[index] < heap->size;
+}
+
+int isEmpty(struct MinHeap *heap)
+{
+	return heap->size == 0;
+}
+
+void dijkstra(struct Graph *graph, char source)
+{
+	int i, u, v;
+	struct HeapNode *heapNode;
+	struct AdjListNode *adjNode;
+
+	int srcI = getIndex(graph->key, graph->size, source);
+
+	int cost[graph->size];
+	char path[graph->size];
+
+	struct MinHeap *heap = newMinHeap(graph->size);
+
+	for (i = 0; i < graph->size; i++)
+	{
+		path[i] = '-';
+		cost[i] = (i == srcI) ? 0 : INT_MAX;
+		insert(heap, newHeapNode(i, cost[i]));
+	}
+
+	while (!isEmpty(heap))
+	{
+		heapNode = extract(heap);
+		u = heapNode->index;
+
+		if (path[u] == '-' && cost[u] > 0)
+			path[u] = graph->key[u];
+
+		adjNode = graph->array[u].head;
+		while (adjNode)
+		{
+			v = adjNode->dest;
+
+			if (isInHeap(heap, v) && cost[u] != INT_MAX && adjNode->cost + cost[u] < cost[v])
+			{
+				cost[v] = cost[u] + adjNode->cost;
+				path[v] = path[u];
+
+				updateHeap(heap, v, cost[v]);
+			}
+			adjNode = adjNode->next;
+		}
+	}
+
+	for (i = 0; i < graph->size; i++)
+		printf("%c %4d %c\n", graph->key[i], cost[i], path[i]);
 }
