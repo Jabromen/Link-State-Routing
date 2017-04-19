@@ -2,7 +2,7 @@
  * This file implements the functions used for a graph structure
  *
  * @author Jeffrey Bromen
- * @date 4/16/17
+ * @date 4/17/17
  * @info Systems and Networks II
  * @info Project 3
  */

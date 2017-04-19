@@ -1,37 +1,37 @@
 #include "lsPacket.h"
 #include "lsGraph.h"
+#include "lsDijkstra.h"
 
 int main(void)
 {
-	char lsPacket[LS_PACKET_SIZE];
+	struct graphT *graph = newGraph('D');
 
-	buildLSPacket(lsPacket, 3, 0, 'A', 'B', 20);
+	addEdge(graph, 'D', 'C', 2, 0);
+	addEdge(graph, 'C', 'D', 2, 0);
+	addEdge(graph, 'D', 'B', 11, 0);
+	addEdge(graph, 'B', 'D', 11, 0);
+	addEdge(graph, 'C', 'B', 3, 0);
+	addEdge(graph, 'B', 'C', 3, 0);
+	addEdge(graph, 'A', 'B', 5, 0);
+	addEdge(graph, 'B', 'A', 5, 0);
+	addEdge(graph, 'C', 'A', 10, 0);
+	addEdge(graph, 'A', 'C', 10, 0);
 
-	printLSPacket(lsPacket);
 
-	int hopCount = getHopCount(lsPacket);
+	// addEdgeFromPacket(graph, lsPacket);
+	// printGraph(graph);
+	// printf("\n");
 
-	while (hopCount > 0)
-	{
-		hopCount = decrementHopCount(lsPacket);
-		printLSPacket(lsPacket);
-	}
+	// buildLSPacket(lsPacket, 3, 1, 'A', 'B', 20);
 
-	struct graphT *graph = newGraph('A');
-
-	addEdge(graph, 'A', 'B', 60, 0);
-	addEdge(graph, 'A', 'C', 50, 0);
-	addEdge(graph, 'A', 'D', 40, 0);
-	addEdge(graph, 'A', 'E', 30, 0);
-
-	addEdgeFromPacket(graph, lsPacket);
+	// addEdgeFromPacket(graph, lsPacket);
 	printGraph(graph);
-	printf("\n");
 
-	buildLSPacket(lsPacket, 3, 1, 'A', 'B', 20);
+	struct routingTable *table = newRoutingTable(4);
 
-	addEdgeFromPacket(graph, lsPacket);
-	printGraph(graph);
+	dijkstra(table, graph, 'D');
+
+	printRoutingTable(table);
 
 	return 0;
 }

@@ -2,7 +2,7 @@
  * This file describes the functions used for a graph structure
  *
  * @author Jeffrey Bromen
- * @date 4/16/17
+ * @date 4/17/17
  * @info Systems and Networks II
  * @info Project 3
  */
@@ -10,6 +10,7 @@
 #ifndef _LSGRAPH_H
 #define _LSGRAPH_H
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
