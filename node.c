@@ -84,6 +84,9 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	printf("Press any key to continue when all nodes are running.\n");
+	getchar();
+
 	uptodate = 0;
 	// The main loop where all the processing occurs
 	while (1)
