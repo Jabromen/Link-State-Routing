@@ -75,7 +75,7 @@ void push(struct FifoQueue *queue, const char *packet)
 {
 	struct QueueNode *node = newQueueNode(packet);
 
-	if (queue->size == 0)
+	if (isEmptyQueue(queue))
 	{
 		queue->head = node;
 		queue->tail = node;
@@ -83,6 +83,7 @@ void push(struct FifoQueue *queue, const char *packet)
 	else
 	{
 		queue->tail->next = node;
+		queue->tail = node;
 	}
 
 	queue->size++;
@@ -90,7 +91,7 @@ void push(struct FifoQueue *queue, const char *packet)
 
 void pop(struct FifoQueue *queue, char *buffer)
 {
-	if (queue->size == 0)
+	if (isEmptyQueue(queue))
 		return;
 
 	struct QueueNode *node = queue->head;
@@ -98,7 +99,7 @@ void pop(struct FifoQueue *queue, char *buffer)
 	queue->head = node->next;
 	queue->size--;
 
-	if (queue->size == 0)
+	if (isEmptyQueue(queue))
 		queue->tail = NULL;
 
 	memcpy(buffer, node->packet, LS_PACKET_SIZE);
@@ -183,4 +184,75 @@ int floodPacket(int fd, const char *packet, struct NeighborList *neighbors)
 	}
 
 	return 0;
+}
+
+int getAddress(char *buffer, const char *hostname)
+{
+	struct hostent *hp;
+
+	hp = gethostbyname(hostname);
+
+	if (!hp) {
+		fprintf(stderr, "Could not obtain address of %s\n", hostname);
+		return -1;
+	}
+
+	inet_ntop(AF_INET, hp->h_addr_list[0], buffer, INET_ADDRSTRLEN);
+
+	return 0;
+}
+
+void processTextFile(const char *filename, struct NeighborList *neighbors)
+{
+	FILE *fp = fopen(filename, "r");
+
+	char label;
+	char *address;
+	char ip[INET_ADDRSTRLEN];
+	int port, cost;
+
+	int i;
+	char line[128];
+	char *tokens[4];
+	char *token;
+
+	while (fgets(line, 128, fp) != NULL)
+	{
+		i = 0;
+		token = strtok(line, DELIM);
+		tokens[i++] = token;
+
+		while (token && i < 4)
+		{
+			token = strtok(NULL, DELIM);
+			tokens[i++] = token;
+		}
+
+		label = tokens[0][0];
+		address = tokens[1];
+		port = atoi(tokens[2]);
+		cost = atoi(tokens[3]);
+
+		getAddress(ip, address);
+
+		addToList(neighbors, newNeighbor(label, ip, port, cost));
+	}
+
+	fclose(fp);
+}
+
+void queueNeighbors(struct NeighborList *neighbors, struct FifoQueue *queue, char label)
+{
+	struct Neighbor *neighbor;
+	char packet[LS_PACKET_SIZE];
+
+	neighbor = neighbors->head;
+
+	while (neighbor)
+	{
+		buildLSPacket(packet, 6, 0, label, neighbor->label, neighbor->cost);
+		push(queue, packet);
+
+		neighbor = neighbor->next;
+	}
 }

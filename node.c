@@ -76,12 +76,8 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	/**
-	 * The text file processing should populate the neighbor list
-	 * and build link-state packets of the initial info and push them
-	 * into the recvQueue to be processed/sent later in the below while loop.
-	 */
-	// process_text_file(neighbors, recvQueue, filename);
+	processTextFile(filename, neighbors);
+	queueNeighbors(neighbors, recvQueue, label);
 
 	if ((err = pthread_create(&network_thread, NULL, &networkThread, &fd))) {
 		fprintf(stderr, "Can't create Network Thread: [%s]\n", strerror(err));
@@ -89,7 +85,7 @@ int main(int argc, char **argv)
 	}
 
 	uptodate = 0;
-
+	// The main loop where all the processing occurs
 	while (1)
 	{
 		// Process recveived packet, decrement hop count, and push to send queue
@@ -113,8 +109,6 @@ int main(int argc, char **argv)
 			}
 			uptodate = 0;
 		}
-		// Give time to receive new packets and delay forwarding table calculations
-		sleep(1);
 
 		if (isEmptyQueue(recvQueue) && !uptodate)
 		{
