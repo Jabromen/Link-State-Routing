@@ -217,10 +217,10 @@ void dijkstra(struct Graph *graph, char source)
 	}
 
 	free(heap);
-
+	printf("Link    Cost    NextNode\n");
 	for (i = 0; i < graph->size; i++)
 		if (cost[i] != INT_MAX)
-			printf("%c %4d %c\n", graph->key[i], cost[i], path[i]);
+			printf("%c%8d       %c\n", graph->key[i], cost[i], path[i]);
 
 	printf("\n");
 }

@@ -39,7 +39,7 @@ int main(void)
 	// addEdge(graph, 'E', 'D', 1, 0);
 
 	printGraph(graph);
-
+	printf("\n\n");
 	dijkstra(graph, 'A');
 	printf("\n");
 	dijkstra(graph, 'B');
