@@ -20,6 +20,7 @@ struct Graph
 {
 	int size;
 	int directed;
+	int updated;
 	char *key;
 	struct AdjList *array;
 } Graph;
@@ -84,6 +85,16 @@ int addEdge(struct Graph *graph, char source, char dest, int cost, int seqN);
  */
 int updateEdge(struct Graph *graph, int source, int dest, int cost, int seqN);
 
+/**
+ * Finds the index of a router label.
+ * Assigns a label to an index if not found and room is availible.
+ *
+ * @param key   - array of router labels
+ * @param size  - size of array
+ * @param label - label being searched for
+ *
+ * @return - index of label, -1 if not found and unable to assign index
+ */
 int getIndex(char *key, int size, char label);
 
 /**

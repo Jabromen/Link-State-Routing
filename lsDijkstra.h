@@ -54,6 +54,13 @@ struct MinHeap *newMinHeap(int cap);
 struct HeapNode *newHeapNode(int index, int cost);
 
 /**
+ * Frees the memory allocated to a heap
+ *
+ * @param heap - min heap being freed
+ */
+void destroyHeap(struct MinHeap *heap);
+
+/**
  * Fixes a min heap by sifting up from index
  *
  * @param heap  - min heap being fixed

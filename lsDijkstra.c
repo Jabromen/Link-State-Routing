@@ -48,6 +48,13 @@ struct HeapNode *newHeapNode(int index, int cost)
 	return node;
 }
 
+void destroyHeap(struct MinHeap *heap)
+{
+	free(heap->array);
+	free(heap->pos);
+	free(heap);
+}
+
 void siftUp(struct MinHeap *heap, int index)
 {
 	if (index > heap->size)
@@ -216,11 +223,13 @@ void dijkstra(struct Graph *graph, char source)
 		free(heapNode);
 	}
 
-	free(heap);
+	destroyHeap(heap);
+	graph->updated = 0;
 
+	printf("Destination | Forward to\n");
 	for (i = 0; i < graph->size; i++)
 		if (cost[i] != INT_MAX)
-			printf("%c %4d %c\n", graph->key[i], cost[i], path[i]);
+			printf("%c           | %c\n", graph->key[i], path[i]);
 
 	printf("\n");
 }

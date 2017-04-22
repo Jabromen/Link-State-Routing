@@ -38,6 +38,7 @@ struct Graph *newGraph(int size, int directed)
 
 	graph->size = size;
 	graph->directed = directed;
+	graph->updated = 0;
 
 	return graph;
 }
@@ -70,6 +71,7 @@ int updateEdge(struct Graph *graph, int source, int dest, int cost, int seqN)
 			{
 				node->cost = cost;
 				node->seqN = seqN;
+				graph->updated = 1;
 			}
 			returnVal = 1;
 			break;
@@ -121,6 +123,7 @@ int addEdge(struct Graph *graph, char source, char dest, int cost, int seqN)
 
 	node->next = graph->array[srcI].head;
 	graph->array[srcI].head = node;
+	graph->updated = 1;
 
 	// If undirected graph, add reverse edge as well
 	if (!graph->directed)

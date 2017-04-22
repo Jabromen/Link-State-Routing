@@ -228,6 +228,9 @@ void processTextFile(const char *filename, struct NeighborList *neighbors)
 			tokens[i++] = token;
 		}
 
+		if (i < 4)
+			continue;
+
 		label = tokens[0][0];
 		address = tokens[1];
 		port = atoi(tokens[2]);
