@@ -67,7 +67,7 @@ int updateEdge(struct Graph *graph, int source, int dest, int cost, int seqN)
 	{
 		if (node->dest == dest)
 		{
-			if ((node->seqN + 1) % 255 == seqN)
+			if ((node->seqN + 1) % 256 == seqN)
 			{
 				node->cost = cost;
 				node->seqN = seqN;
@@ -88,7 +88,7 @@ int updateEdge(struct Graph *graph, int source, int dest, int cost, int seqN)
 		{
 			if (node->dest == source)
 			{
-				if ((node->seqN + 1) % 255 == seqN)
+				if ((node->seqN + 1) % 256 == seqN)
 				{
 					node->cost = cost;
 					node->seqN = seqN;

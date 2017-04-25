@@ -226,10 +226,10 @@ void dijkstra(struct Graph *graph, char source)
 	destroyHeap(heap);
 	graph->updated = 0;
 
-	printf("Destination | Forward to\n");
+	printf("Destination | Forward to | Cost\n");
 	for (i = 0; i < graph->size; i++)
 		if (cost[i] != INT_MAX)
-			printf("%c           | %c\n", graph->key[i], path[i]);
+			printf("%c           | %c          | %d\n", graph->key[i], path[i], cost[i]);
 
 	printf("\n");
 }

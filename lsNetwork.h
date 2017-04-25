@@ -168,8 +168,10 @@ int getAddress(char *buffer, const char *hostname);
  *
  * @param filename  - filename of discovery text file
  * @param neighbors - neighbor list structure
+ *
+ * @return - 0 if success, -1 if error
  */
-void processTextFile(const char *filename, struct NeighborList *neighbors);
+int processTextFile(const char *filename, struct NeighborList *neighbors);
 
 /**
  * Queues all of the neighboring router edges.

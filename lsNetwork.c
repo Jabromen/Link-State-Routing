@@ -202,9 +202,14 @@ int getAddress(char *buffer, const char *hostname)
 	return 0;
 }
 
-void processTextFile(const char *filename, struct NeighborList *neighbors)
+int processTextFile(const char *filename, struct NeighborList *neighbors)
 {
 	FILE *fp = fopen(filename, "r");
+
+	if (!fp) {
+		perror("Error");
+		return -1;
+	}
 
 	char label;
 	char *address;
@@ -242,6 +247,8 @@ void processTextFile(const char *filename, struct NeighborList *neighbors)
 	}
 
 	fclose(fp);
+
+	return 0;
 }
 
 void queueNeighbors(struct NeighborList *neighbors, struct FifoQueue *queue, char label)
