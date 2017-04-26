@@ -263,6 +263,12 @@ int parseCommandLine(int argc, char **argv, char *label, int *port, int *numRout
 		return -1;
 	}
 
+	if (strlen(argv[1]) != 1)
+	{
+		fprintf(stderr, "Please use a 1 character router label.\n");
+		return -1;
+	}
+
 	// Read command line arguments
 	*label = argv[1][0];
 	*port = atoi(argv[2]);
